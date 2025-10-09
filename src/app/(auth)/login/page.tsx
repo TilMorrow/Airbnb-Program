@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '../../lib/supabase/client';
-import { verifyPassword } from '../../lib/auth/authPassword';
+import { verifyPasswordAction } from '../../lib/auth/authPassword';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -65,7 +65,7 @@ export default function LoginPage() {
       }
 
       // Verify password
-      const isPasswordValid = await verifyPassword(password, passwordData.pass_hash);
+      const isPasswordValid = await verifyPasswordAction(password, passwordData.pass_hash);
 
       if (!isPasswordValid) {
         setError('Email or password is incorrect');

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '../../lib/supabase/client';
-import { hashPassword } from '../../lib/auth/authPassword';
+import { hashPasswordAction } from '../../lib/auth/authPassword';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -69,7 +69,7 @@ export default function SignupPage() {
       }
 
       // Hash password
-      const hashedPassword = await hashPassword(formData.password);
+      const hashedPassword = await hashPasswordAction(formData.password);
 
       // Create tenant
       const { data: tenant, error: tenantError } = await supabase
