@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '../../lib/supabase/client';
@@ -20,25 +20,6 @@ export default function SignupPage() {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [checking, setChecking] = useState(true);
-
-  // Check if user is already logged in
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const tenantId = localStorage.getItem('tenant_id');
-        if (tenantId) {
-          router.push('/dashboard');
-        }
-      } catch (error) {
-        console.error('Auth check failed:', error);
-      } finally {
-        setChecking(false);
-      }
-    };
-
-    checkAuth();
-  }, [router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -68,10 +49,33 @@ export default function SignupPage() {
         return;
       }
 
-      // Hash password
-      const hashedPassword = await hashPasswordAction(formData.password);
+      // Step 1: Create Supabase Auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            name: formData.name,
+          },
+        },
+      });
 
-      // Create tenant
+      if (authError) {
+        console.error('Auth signup error:', authError);
+        setError(`Auth error: ${authError.message}`);
+        setLoading(false);
+        return;
+      }
+
+      if (!authData.user) {
+        setError('Failed to create account - no user returned');
+        setLoading(false);
+        return;
+      }
+
+      console.log('Auth user created:', authData.user.id);
+
+      // Step 2: Create tenant record
       const { data: tenant, error: tenantError } = await supabase
         .from('tenants')
         .insert([
@@ -88,54 +92,51 @@ export default function SignupPage() {
         .single();
 
       if (tenantError) {
+        console.error('Tenant insert error:', tenantError);
         if (tenantError.code === '23505') {
           setError('Email, phone, or address already exists');
         } else {
-          setError(tenantError.message);
+          setError(`Tenant creation failed: ${tenantError.message}`);
         }
         setLoading(false);
         return;
       }
 
-      // Create password entry
-      const { error: passwordError } = await supabase
+      console.log('Tenant created:', tenant);
+
+      // Step 3: Hash password for your custom passwords table
+      const hashedPassword = await hashPasswordAction(formData.password);
+      console.log('Password hashed, inserting into passwords table...');
+
+      // Step 4: Create password entry
+      const { data: passwordData, error: passwordError } = await supabase
         .from('passwords')
         .insert([
           {
             pass_id: tenant.t_id,
             pass_hash: hashedPassword,
           },
-        ]);
+        ])
+        .select();
 
       if (passwordError) {
-        // Delete tenant if password creation fails
-        await supabase.from('tenants').delete().eq('t_id', tenant.t_id);
-        setError('Failed to create account');
+        console.error('Password insert error:', passwordError);
+        setError(`Failed to create password: ${passwordError.message}`);
         setLoading(false);
         return;
       }
 
-      // Store tenant info in localStorage
-      localStorage.setItem('tenant_id', tenant.t_id.toString());
-      localStorage.setItem('tenant_name', tenant.t_name);
-      localStorage.setItem('tenant_email', tenant.t_email);
+      console.log('Password created:', passwordData);
 
+      // Success! Redirect to dashboard
       router.push('/dashboard');
-    } catch (err) {
-      setError('An unexpected error occurred');
-      console.error(err);
+    } catch (err: any) {
+      setError(`An unexpected error occurred: ${err.message}`);
+      console.error('Signup error:', err);
     } finally {
       setLoading(false);
     }
   };
-
-  if (checking) {
-    return (
-      <main className="min-h-screen flex items-center justify-center">
-        <div className="text-xl font-semibold">Loading...</div>
-      </main>
-    );
-  }
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4 py-8">
