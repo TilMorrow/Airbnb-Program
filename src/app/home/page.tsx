@@ -15,30 +15,32 @@ export default function Home() {
     async function fetchProperties() {
       try {
         const { data, error } = await supabase
-          .from("property")
-          .select("p_id, p_address, p_bedrooms, p_bathrooms, p_dimensions")
+          .from('property')
+          .select('p_id, p_address, p_bedrooms, p_bathrooms, p_dimensions, p_price_per_night')
           .limit(20);
 
         if (error) {
+          console.error('Error fetching properties:', error);
           if (mounted) setError(error.message ?? JSON.stringify(error));
-          return;
-        }
-
-        if (mounted) {
-          const rows = (data ?? []) as any[];
-
-          const mapped: Property[] = rows
-            .map((r) => ({
-              p_id: Number(r.p_id ?? r.id ?? r.property_id),
-              p_address: r.p_address ?? "",
-              p_bedrooms: Number(r.p_bedrooms ?? 0),
-              p_bathrooms: Number(r.p_bathrooms ?? 0),
-              p_dimensions: Number(r.p_dimensions ?? 0),
-            }))
-            .filter((p) => Number.isFinite(p.p_id) && p.p_id > 0);
+        } else {
+          if (mounted) {
+            const rows = (data ?? []) as any[];
+            const mapped: Property[] = rows
+              .map((r) => {
+                const rawId = r.p_id ?? r.id ?? r.property_id;
+                const p_id = Number(rawId);
+                const p_address = r.p_address ?? r.address ?? r.name ?? '';
+                const p_bedrooms = Number(r.p_bedrooms ?? r.bedrooms ?? r.num_bedrooms ?? 0);
+                const p_bathrooms = Number(r.p_bathrooms ?? r.bathrooms ?? r.num_bathrooms ?? 0);
+                const p_dimensions = Number(r.p_dimensions ?? r.dimensions ?? r.size ?? 0);
+                const p_price_per_night = Number(r.p_price_per_night ?? r.price ?? 100);
+                return { p_id, p_address, p_bedrooms, p_bathrooms, p_dimensions, p_price_per_night };
+              })
+              .filter((p) => Number.isFinite(p.p_id) && p.p_id > 0);
 
           setProperties(mapped);
         }
+      }
       } catch (err) {
         if (mounted)
           setError(err instanceof Error ? err.message : String(err));
@@ -55,19 +57,56 @@ export default function Home() {
   }, []);
 
   if (loading) {
-    return <div className="loading-state">Loading properties...</div>;
+    return <div className="loading-state p-8 text-center">Loading properties...</div>;
   }
 
   if (error) {
     return (
-      <div className="error-state">
-        <p className="text-red-600">{error}</p>
-        <button
-          className="mt-3 px-3 py-2 bg-blue-600 text-white rounded"
-          onClick={() => location.reload()}
-        >
-          Retry
-        </button>
+      <div className="error-state p-8">
+        <p className="text-red-600 mb-4">{error}</p>
+        <div className="mt-3">
+          <button
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            onClick={() => {
+              setError('');
+              setLoading(true);
+
+              (async function retry() {
+                try {
+                  const { data, error } = await supabase
+                    .from('property')
+                    .select('p_id, p_address, p_bedrooms, p_bathrooms, p_dimensions, p_price_per_night')
+                    .limit(20);
+                  if (error) {
+                    setError(error.message ?? JSON.stringify(error));
+                    setLoading(false);
+                    return;
+                  }
+                  const rows = (data ?? []) as any[];
+                  const mapped: Property[] = rows
+                    .map((r) => {
+                      const rawId = r.p_id ?? r.id ?? r.property_id;
+                      const p_id = Number(rawId);
+                      const p_address = r.p_address ?? r.address ?? r.name ?? '';
+                      const p_bedrooms = Number(r.p_bedrooms ?? r.bedrooms ?? r.num_bedrooms ?? 0);
+                      const p_bathrooms = Number(r.p_bathrooms ?? r.bathrooms ?? r.num_bathrooms ?? 0);
+                      const p_dimensions = Number(r.p_dimensions ?? r.dimensions ?? r.size ?? 0);
+                      const p_price_per_night = Number(r.p_price_per_night ?? r.price ?? 100);
+                      return { p_id, p_address, p_bedrooms, p_bathrooms, p_dimensions, p_price_per_night };
+                    })
+                    .filter((p) => Number.isFinite(p.p_id) && p.p_id > 0);
+                  setProperties(mapped);
+                } catch (e) {
+                  setError(e instanceof Error ? e.message : String(e));
+                } finally {
+                  setLoading(false);
+                }
+              })();
+            }}
+          >
+            Retry
+          </button>
+        </div>
       </div>
     );
   }
