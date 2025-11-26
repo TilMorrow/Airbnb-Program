@@ -16,7 +16,7 @@ export default function Home() {
       try {
         const { data, error } = await supabase
           .from('property')
-          .select('p_id, p_address, p_bedrooms, p_bathrooms, p_dimensions, p_price_per_night')
+          .select('p_id, p_address, p_bedrooms, p_bathrooms, p_dimensions, p_price_per_night, p_image')
           .limit(20);
 
         if (error) {
@@ -34,7 +34,8 @@ export default function Home() {
                 const p_bathrooms = Number(r.p_bathrooms ?? r.bathrooms ?? r.num_bathrooms ?? 0);
                 const p_dimensions = Number(r.p_dimensions ?? r.dimensions ?? r.size ?? 0);
                 const p_price_per_night = Number(r.p_price_per_night ?? r.price ?? 100);
-                return { p_id, p_address, p_bedrooms, p_bathrooms, p_dimensions, p_price_per_night };
+                const p_image = r.p_image ?? r.image ?? '';
+                return { p_id, p_address, p_bedrooms, p_bathrooms, p_dimensions, p_price_per_night,p_image };
               })
               .filter((p) => Number.isFinite(p.p_id) && p.p_id > 0);
 
@@ -92,7 +93,8 @@ export default function Home() {
                       const p_bathrooms = Number(r.p_bathrooms ?? r.bathrooms ?? r.num_bathrooms ?? 0);
                       const p_dimensions = Number(r.p_dimensions ?? r.dimensions ?? r.size ?? 0);
                       const p_price_per_night = Number(r.p_price_per_night ?? r.price ?? 100);
-                      return { p_id, p_address, p_bedrooms, p_bathrooms, p_dimensions, p_price_per_night };
+                      const p_image = r.p_image ?? r.image ?? '';
+                      return { p_id, p_address, p_bedrooms, p_bathrooms, p_dimensions, p_price_per_night, p_image };
                     })
                     .filter((p) => Number.isFinite(p.p_id) && p.p_id > 0);
                   setProperties(mapped);
