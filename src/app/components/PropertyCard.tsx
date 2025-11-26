@@ -1,5 +1,4 @@
 "use client";
-import React from 'react';
 import { useRouter } from 'next/navigation';
 
 export interface Property {
@@ -8,16 +7,18 @@ export interface Property {
   p_bedrooms: number;   
   p_bathrooms: number;  
   p_dimensions: number;
-  p_price_per_night?: number;
+  p_price_per_night: number;
+  p_image: string;
 }
 
 export interface PropertyCardProps {
   property: Property;
 }
 
+
 export default function PropertyCard({ property }: PropertyCardProps) {
   const router = useRouter();
-  const PLACEHOLDER_IMAGE = 'https://dummyimage.com/400x300/5c5c5c/fff.png&text=Placeholder+Image';
+  const imageURL = property.p_image;
   
   const address = property.p_address ?? 'Address not provided';
   const bedrooms = property.p_bedrooms ?? 0;
@@ -34,7 +35,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
       
       <div className="aspect-video w-full relative bg-gray-50">
         <img
-          src={PLACEHOLDER_IMAGE}
+          src={imageURL}
           alt={`Placeholder for property at ${address}`}
           className="object-cover w-full h-full"
         />
