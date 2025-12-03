@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '../../lib/supabase/client';
-import { verifyPasswordAction } from '../../lib/auth/authPassword';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -18,8 +17,8 @@ export default function LoginPage() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const tenantId = localStorage.getItem('tenant_id');
-        if (tenantId) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
           router.push('/dashboard');
         }
       } catch (error) {
@@ -38,43 +37,41 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      // Find tenant by email
+      // Use Supabase Auth to sign in
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+      });
+
+      if (authError) {
+        console.error('Auth error:', authError);
+        setError('Email or password is incorrect');
+        setLoading(false);
+        return;
+      }
+
+      if (!authData.user) {
+        setError('Login failed - no user returned');
+        setLoading(false);
+        return;
+      }
+
+      // Fetch tenant details
       const { data: tenant, error: tenantError } = await supabase
         .from('tenants')
         .select('t_id, t_name, t_email')
-        .eq('t_email', email)
+        .eq('t_id', authData.user.id)
         .single();
 
       if (tenantError || !tenant) {
-        setError('Email or password is incorrect');
+        console.error('Tenant fetch error:', tenantError);
+        setError('User profile not found. Please contact support.');
         setLoading(false);
         return;
       }
 
-      // Get password hash for this tenant
-      const { data: passwordData, error: passwordError } = await supabase
-        .from('passwords')
-        .select('pass_hash')
-        .eq('pass_id', tenant.t_id)
-        .single();
-
-      if (passwordError || !passwordData) {
-        setError('Email or password is incorrect');
-        setLoading(false);
-        return;
-      }
-
-      // Verify password
-      const isPasswordValid = await verifyPasswordAction(password, passwordData.pass_hash);
-
-      if (!isPasswordValid) {
-        setError('Email or password is incorrect');
-        setLoading(false);
-        return;
-      }
-
-      // Store tenant ID in localStorage
-      localStorage.setItem('tenant_id', tenant.t_id.toString());
+      // Store tenant info in localStorage (optional, session is managed by Supabase)
+      localStorage.setItem('tenant_id', tenant.t_id);
       localStorage.setItem('tenant_name', tenant.t_name);
       localStorage.setItem('tenant_email', tenant.t_email);
 

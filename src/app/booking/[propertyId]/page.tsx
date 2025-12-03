@@ -27,7 +27,7 @@ export default function BookingPage({ params }: BookingPageProps) {
   const [loading, setLoading] = useState(true)
   const [bookingLoading, setBookingLoading] = useState(false)
   const [error, setError] = useState('')
-  const [user, setUser] = useState<any>(null)
+  const [userId, setUserId] = useState<string | null>(null)
   
   const [formData, setFormData] = useState({
     checkIn: '',
@@ -51,7 +51,7 @@ export default function BookingPage({ params }: BookingPageProps) {
           return
         }
         
-        setUser(session.user)
+        setUserId(session.user.id)
 
         // Fetch property details
         const { data: propertyData, error: propertyError } = await supabase
@@ -110,7 +110,7 @@ export default function BookingPage({ params }: BookingPageProps) {
 
     try {
       const { data, error } = await supabase.rpc('check_booking_conflict', {
-        property_id: propertyId,
+        property_id: parseInt(propertyId),
         check_in: formData.checkIn,
         check_out: formData.checkOut,
       })
@@ -133,6 +133,12 @@ export default function BookingPage({ params }: BookingPageProps) {
     setBookingLoading(true)
 
     try {
+      if (!userId) {
+        setError('User not authenticated')
+        setBookingLoading(false)
+        return
+      }
+
       // Validate dates
       const checkIn = new Date(formData.checkIn)
       const checkOut = new Date(formData.checkOut)
@@ -165,13 +171,13 @@ export default function BookingPage({ params }: BookingPageProps) {
         return
       }
 
-      // Create booking
+      // Create booking (UUID is auto-generated)
       const { data: booking, error: bookingError } = await supabase
         .from('bookings')
         .insert([
           {
             p_id: parseInt(propertyId),
-            t_id: user.id,
+            t_id: userId,
             b_check_in: formData.checkIn,
             b_check_out: formData.checkOut,
             b_guests: formData.guests,
