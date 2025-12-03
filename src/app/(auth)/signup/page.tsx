@@ -75,11 +75,12 @@ export default function SignupPage() {
 
       console.log('Auth user created:', authData.user.id);
 
-      // Step 2: Create tenant record
+      // Step 2: Create tenant record with auth user's UUID
       const { data: tenant, error: tenantError } = await supabase
         .from('tenants')
         .insert([
           {
+            t_id: authData.user.id, // CRITICAL FIX: Use auth user's UUID
             t_name: formData.name,
             t_email: formData.email,
             t_phone: formData.phone,
@@ -113,7 +114,7 @@ export default function SignupPage() {
         .from('passwords')
         .insert([
           {
-            pass_id: tenant.t_id,
+            pass_id: authData.user.id, // Use auth user's UUID here too
             pass_hash: hashedPassword,
           },
         ])
@@ -128,7 +129,11 @@ export default function SignupPage() {
 
       console.log('Password created:', passwordData);
 
-      // Success! Redirect to dashboard
+      // Success! Store session info and redirect
+      localStorage.setItem('tenant_id', authData.user.id);
+      localStorage.setItem('tenant_name', formData.name);
+      localStorage.setItem('tenant_email', formData.email);
+
       router.push('/dashboard');
     } catch (err: any) {
       setError(`An unexpected error occurred: ${err.message}`);
