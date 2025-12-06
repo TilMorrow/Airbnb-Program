@@ -18,58 +18,22 @@ export default function Navbar() {
             </span>
           </div>
 
-          {/* Search Bar - Desktop */}
-          <div className="hidden md:flex flex-1 mx-8">
-            <div className="relative w-full">
-              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <svg 
-                  className="w-4 h-4 text-gray-500 dark:text-gray-400" 
-                  aria-hidden="true" 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  fill="none" 
-                  viewBox="0 0 20 20"
-                >
-                  <path 
-                    stroke="currentColor" 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth="2" 
-                    d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
-                  />
-                </svg>
-              </div>
-              <input 
-                type="text" 
-                className="w-full pl-10 pr-4 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500" 
-                placeholder="Search..." 
-              />
-            </div>
-          </div>
-
           {/* Navigation Menu - Desktop */}
           <ul className="hidden md:flex space-x-8">
             <li>
               <a 
-                href="#" 
-                className="text-blue-700 font-medium dark:text-blue-500"
+                href="/dashboard" 
+                className="text-gray-900 hover:text-blue-700 dark:text-gray-300 dark:hover:text-blue-500 transition"
               >
-                Homes
+                Dashboard
               </a>
             </li>
             <li>
               <a 
-                href="#" 
+                href="/home" 
                 className="text-gray-900 hover:text-blue-700 dark:text-gray-300 dark:hover:text-blue-500 transition"
               >
-                Experiences
-              </a>
-            </li>
-            <li>
-              <a 
-                href="#" 
-                className="text-gray-900 hover:text-blue-700 dark:text-gray-300 dark:hover:text-blue-500 transition"
-              >
-                Services
+                Properties
               </a>
             </li>
           </ul>

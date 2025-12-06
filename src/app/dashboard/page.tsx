@@ -70,7 +70,7 @@ export default function Dashboard() {
           Email: {user?.email}
         </p>
         <p className="text-gray-600 dark:text-gray-400">
-          This is your dashboard. Add your content here.
+          This is your dashboard. TODO: Add user's bookings here
         </p>
       </div>
     </main>
