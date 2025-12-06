@@ -30,6 +30,10 @@ export default function PropertyCard({ property }: PropertyCardProps) {
     router.push(`/booking/${property.p_id}`);
   };
 
+  const handleReviews = () => {
+    router.push(`/reviews/${property.p_id}`);
+  };
+
   return (
     <div className="flex flex-col rounded-xl overflow-hidden shadow-lg transition duration-300 hover:shadow-xl border border-gray-100 bg-white">
       
@@ -69,6 +73,13 @@ export default function PropertyCard({ property }: PropertyCardProps) {
               ${pricePerNight}
             </span>
             <span className="text-sm text-gray-600"> / night</span>
+            <span>
+              <button
+            onClick={handleReviews}
+            className="px-4 py-2 ml-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-lg transition-colors duration-200 text-white-400">
+            Reviews
+          </button>
+            </span>
           </div>
           <button
             onClick={handleBookNow}
