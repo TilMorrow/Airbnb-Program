@@ -42,6 +42,10 @@ export default function Dashboard() {
     router.push('/login');
   };
 
+  const handleAddProperty = () => {
+    router.push('/new-listing'); 
+  };
+
   if (loading) {
     return (
       <main className="min-h-screen flex items-center justify-center">
@@ -63,9 +67,20 @@ export default function Dashboard() {
       </div>
       
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-        <p className="text-gray-600 dark:text-gray-400 mb-4">
-          Welcome, {user?.name}!
-        </p>
+        
+
+        <div className="flex justify-between items-center mb-4">
+            <p className="text-gray-600 dark:text-gray-400">
+                Welcome, {user?.name}!
+            </p>
+            <button
+                onClick={handleAddProperty}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition"
+            >
+                + Add Property
+            </button>
+        </div>
+
         <p className="text-gray-600 dark:text-gray-400 mb-2">
           Email: {user?.email}
         </p>
