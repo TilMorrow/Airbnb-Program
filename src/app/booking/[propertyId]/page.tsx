@@ -43,8 +43,8 @@ export default function BookingPage({ params }: BookingPageProps) {
   useEffect(() => {
     const init = async () => {
       try {
-        // Check if user is logged in
-        const { data: { session } } = await supabase.auth.getSession()
+        // Get current session from Supabase
+        const { data: { session } } = await supabase.auth.getSession();
         
         if (!session) {
           router.push(`/login?redirect=/booking/${propertyId}`)
@@ -53,14 +53,22 @@ export default function BookingPage({ params }: BookingPageProps) {
         
         setUserId(session.user.id)
 
-        // Fetch property details
+        const propertyIdNum = parseInt(propertyId, 10)
+        
+        if (isNaN(propertyIdNum)) {
+          setError('Invalid property ID')
+          setLoading(false)
+          return
+        }
+
         const { data: propertyData, error: propertyError } = await supabase
           .from('property')
           .select('p_id, p_address, p_bedrooms, p_bathrooms, p_dimensions, p_price_per_night')
-          .eq('p_id', propertyId)
+          .eq('p_id', propertyIdNum)
           .single()
 
         if (propertyError) {
+          console.error('Property fetch error:', propertyError)
           setError('Property not found')
           return
         }
@@ -110,17 +118,17 @@ export default function BookingPage({ params }: BookingPageProps) {
 
     try {
       const { data, error } = await supabase.rpc('check_booking_conflict', {
-        property_id: parseInt(propertyId),
+        property_id: parseInt(propertyId, 10),
         check_in: formData.checkIn,
         check_out: formData.checkOut,
       })
 
       if (error) {
         console.error('Availability check error:', error)
-        return true // Allow booking if check fails
+        return true
       }
 
-      return !data // If conflict exists (data = true), not available (return false)
+      return !data
     } catch (err) {
       console.error('Availability check failed:', err)
       return true
@@ -171,33 +179,24 @@ export default function BookingPage({ params }: BookingPageProps) {
         return
       }
 
-      // Create booking (UUID is auto-generated)
-      const { data: booking, error: bookingError } = await supabase
-        .from('bookings')
-        .insert([
-          {
-            p_id: parseInt(propertyId),
-            t_id: userId,
-            b_check_in: formData.checkIn,
-            b_check_out: formData.checkOut,
-            b_guests: formData.guests,
-            b_total_price: totalPrice,
-            b_status: 'confirmed',
-            b_special_requests: formData.specialRequests || null,
-          },
-        ])
-        .select()
-        .single()
-
-      if (bookingError) {
-        console.error('Booking error:', bookingError)
-        setError('Failed to create booking. Please try again.')
-        setBookingLoading(false)
-        return
+      // Store booking details in sessionStorage and navigate to payment
+      const bookingDetails = {
+        p_id: parseInt(propertyId, 10),
+        t_id: userId,
+        b_check_in: formData.checkIn,
+        b_check_out: formData.checkOut,
+        b_guests: formData.guests,
+        b_total_price: totalPrice,
+        b_special_requests: formData.specialRequests || null,
+        property_address: property?.p_address,
+        nights: nights,
       }
 
-      // Success - redirect to booking confirmation
-      router.push(`/booking/confirmation/${booking.b_id}`)
+      sessionStorage.setItem('pendingBooking', JSON.stringify(bookingDetails))
+      
+      // Navigate to payment page
+      router.push(`/payment?propertyId=${propertyId}`)
+      
     } catch (err) {
       console.error('Booking submission error:', err)
       setError('An unexpected error occurred')
@@ -237,7 +236,6 @@ export default function BookingPage({ params }: BookingPageProps) {
     <main className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4">
       <div className="max-w-4xl mx-auto">
         
-        {/* Header */}
         <button
           onClick={() => router.back()}
           className="mb-6 text-blue-600 hover:text-blue-700 dark:text-blue-400 flex items-center gap-2"
@@ -250,7 +248,6 @@ export default function BookingPage({ params }: BookingPageProps) {
 
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
           
-          {/* Property Info */}
           <div className="p-6 border-b border-gray-200 dark:border-gray-700">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
               Book Your Stay
@@ -278,10 +275,8 @@ export default function BookingPage({ params }: BookingPageProps) {
             </div>
           </div>
 
-          {/* Booking Form */}
           <form onSubmit={handleSubmit} className="p-6">
             
-            {/* Check-in Date */}
             <div className="mb-4">
               <label
                 htmlFor="checkIn"
@@ -302,7 +297,6 @@ export default function BookingPage({ params }: BookingPageProps) {
               />
             </div>
 
-            {/* Check-out Date */}
             <div className="mb-4">
               <label
                 htmlFor="checkOut"
@@ -323,7 +317,6 @@ export default function BookingPage({ params }: BookingPageProps) {
               />
             </div>
 
-            {/* Number of Guests */}
             <div className="mb-4">
               <label
                 htmlFor="guests"
@@ -345,7 +338,6 @@ export default function BookingPage({ params }: BookingPageProps) {
               />
             </div>
 
-            {/* Special Requests */}
             <div className="mb-6">
               <label
                 htmlFor="specialRequests"
@@ -365,7 +357,6 @@ export default function BookingPage({ params }: BookingPageProps) {
               />
             </div>
 
-            {/* Price Summary */}
             {nights > 0 && (
               <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-6">
                 <h3 className="font-semibold text-gray-900 dark:text-white mb-3">
@@ -384,20 +375,18 @@ export default function BookingPage({ params }: BookingPageProps) {
               </div>
             )}
 
-            {/* Error Message */}
             {error && (
               <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm dark:bg-red-900 dark:border-red-700 dark:text-red-200">
                 {error}
               </div>
             )}
 
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={bookingLoading || nights === 0}
               className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {bookingLoading ? 'Processing...' : `Confirm Booking - $${totalPrice.toFixed(2)}`}
+              {bookingLoading ? 'Processing...' : `Proceed to Payment - $${totalPrice.toFixed(2)}`}
             </button>
 
           </form>

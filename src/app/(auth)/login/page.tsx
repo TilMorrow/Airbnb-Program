@@ -70,11 +70,6 @@ export default function LoginPage() {
         return;
       }
 
-      // Store tenant info in localStorage (optional, session is managed by Supabase)
-      localStorage.setItem('tenant_id', tenant.t_id);
-      localStorage.setItem('tenant_name', tenant.t_name);
-      localStorage.setItem('tenant_email', tenant.t_email);
-
       router.push('/dashboard');
     } catch (err) {
       setError('An unexpected error occurred');
