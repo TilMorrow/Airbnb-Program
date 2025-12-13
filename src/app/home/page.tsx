@@ -3,27 +3,41 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase/client";
 import PropertyCard, { Property } from "../components/PropertyCard";
+import Pagination from "../components/Pagination"; 
 
 export default function Home() {
+  // loading properties
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
+  
+  // pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const PROPERTIES_PER_PAGE = 30;
+  const [totalCount, setTotalCount] = useState(0); 
+  
   useEffect(() => {
     let mounted = true;
 
     async function fetchProperties() {
       try {
-        const { data, error } = await supabase
-          .from('property')
-          .select('p_id, p_address, p_bedrooms, p_bathrooms, p_dimensions, p_price_per_night, p_image')
-          .limit(20);
+        setLoading(true);
+        const offset = (currentPage - 1) * PROPERTIES_PER_PAGE;
 
+        const { data, error, count } = await supabase
+          .from('property')
+          .select('p_id, p_address, p_bedrooms, p_bathrooms, p_dimensions, p_price_per_night, p_image', { count: 'exact' })
+          .limit(PROPERTIES_PER_PAGE)
+          .range(offset, offset + PROPERTIES_PER_PAGE - 1);
+          
         if (error) {
           console.error('Error fetching properties:', error);
           if (mounted) setError(error.message ?? JSON.stringify(error));
         } else {
           if (mounted) {
+            if (count !== null) {
+                setTotalCount(count);
+            }
             const rows = (data ?? []) as any[];
             const mapped: Property[] = rows
               .map((r) => {
@@ -55,7 +69,7 @@ export default function Home() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [currentPage]);
 
   if (loading) {
     return <div className="loading-state p-8 text-center">Loading properties...</div>;
@@ -74,15 +88,24 @@ export default function Home() {
 
               (async function retry() {
                 try {
-                  const { data, error } = await supabase
+                  const offset = (currentPage - 1) * PROPERTIES_PER_PAGE;
+                  
+                  const { data, error, count } = await supabase
                     .from('property')
-                    .select('p_id, p_address, p_bedrooms, p_bathrooms, p_dimensions, p_price_per_night')
-                    .limit(20);
+                    .select('p_id, p_address, p_bedrooms, p_bathrooms, p_dimensions, p_price_per_night, p_image', { count: 'exact' })
+                    .limit(PROPERTIES_PER_PAGE)
+                    .range(offset, offset + PROPERTIES_PER_PAGE - 1);
+                    
                   if (error) {
                     setError(error.message ?? JSON.stringify(error));
                     setLoading(false);
                     return;
                   }
+                  
+                  if (count !== null) {
+                      setTotalCount(count);
+                  }
+                  
                   const rows = (data ?? []) as any[];
                   const mapped: Property[] = rows
                     .map((r) => {
@@ -123,6 +146,17 @@ export default function Home() {
         {properties.map((property) => (
           <PropertyCard key={property.p_id} property={property} />
         ))}
+      </div>
+      
+      <div className="pagination-area mt-6 flex justify-center">
+        {totalCount > PROPERTIES_PER_PAGE && (
+            <Pagination
+                totalItems={totalCount}
+                itemsPerPage={PROPERTIES_PER_PAGE}
+                currentPage={currentPage}
+                onPageChange={setCurrentPage}
+            />
+        )}
       </div>
 
       {properties.length === 0 && (
