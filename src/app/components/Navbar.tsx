@@ -10,7 +10,7 @@ export default function Navbar() {
           <div className="flex items-center space-x-3">
             <img 
               src="sweet-home.png" 
-              className="h-8" 
+              className="h-12" 
               alt="Airbnb Logo" 
             />
             <span className="text-4xl font-semibold text-gray-900 dark:text-white">
