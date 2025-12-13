@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '../../lib/supabase/client'
 
 interface BookingPageProps {
-  params: Promise<{
+  params: {
     propertyId: string
-  }>
+  }
 }
 
 interface Property {
