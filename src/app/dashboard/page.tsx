@@ -3,10 +3,17 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Chatbot from '../components/Chatbot'; 
+import { supabase } from '../lib/supabase/client';
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+}
 
 export default function Dashboard() {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   
   const [isChatOpen, setIsChatOpen] = useState(false); 
@@ -14,19 +21,32 @@ export default function Dashboard() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const tenantId = localStorage.getItem('tenant_id');
-        const tenantName = localStorage.getItem('tenant_name');
-        const tenantEmail = localStorage.getItem('tenant_email');
+        // Get current session from Supabase
+        const { data: { session } } = await supabase.auth.getSession();
         
-        if (!tenantId) {
+        if (!session) {
           router.push('/login');
-        } else {
-          setUser({
-            id: tenantId,
-            name: tenantName,
-            email: tenantEmail,
-          });
+          return;
         }
+
+        // Fetch tenant details
+        const { data: tenant, error } = await supabase
+          .from('tenants')
+          .select('t_id, t_name, t_email')
+          .eq('t_id', session.user.id)
+          .single();
+
+        if (error || !tenant) {
+          console.error('Failed to fetch tenant:', error);
+          router.push('/login');
+          return;
+        }
+
+        setUser({
+          id: tenant.t_id,
+          name: tenant.t_name,
+          email: tenant.t_email,
+        });
       } catch (error) {
         console.error('Auth check failed:', error);
         router.push('/login');
@@ -38,11 +58,14 @@ export default function Dashboard() {
     checkAuth();
   }, [router]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('tenant_id');
-    localStorage.removeItem('tenant_name');
-    localStorage.removeItem('tenant_email');
-    router.push('/login');
+  const handleLogout = async () => {
+    try {
+      // Sign out from Supabase Auth
+      await supabase.auth.signOut();
+      router.push('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   };
 
   const handleAddProperty = () => {
