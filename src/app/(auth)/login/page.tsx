@@ -19,7 +19,7 @@ export default function LoginPage() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
-          router.push('/dashboard');
+          router.push('/login');
         }
       } catch (error) {
         console.error('Auth check failed:', error);
@@ -69,6 +69,11 @@ export default function LoginPage() {
         setLoading(false);
         return;
       }
+
+      // Store tenant info in localStorage (optional, session is managed by Supabase)
+      localStorage.setItem('tenant_id', tenant.t_id);
+      localStorage.setItem('tenant_name', tenant.t_name);
+      localStorage.setItem('tenant_email', tenant.t_email);
 
       router.push('/dashboard');
     } catch (err) {
