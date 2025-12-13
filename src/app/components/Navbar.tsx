@@ -9,12 +9,12 @@ export default function Navbar() {
           {/* Logo */}
           <div className="flex items-center space-x-3">
             <img 
-              src="favicon.ico" 
+              src="sweet-home.png" 
               className="h-8" 
               alt="Airbnb Logo" 
             />
-            <span className="text-2xl font-semibold text-gray-900 dark:text-white">
-              Airbnb
+            <span className="text-4xl font-semibold text-gray-900 dark:text-white">
+              FareInn
             </span>
           </div>
 
@@ -23,7 +23,7 @@ export default function Navbar() {
             <li>
               <a 
                 href="/dashboard" 
-                className="text-gray-900 hover:text-blue-700 dark:text-gray-300 dark:hover:text-blue-500 transition"
+                className="text-2xl text-gray-900 hover:text-blue-700 dark:text-gray-300 dark:hover:text-blue-500 transition"
               >
                 Dashboard
               </a>
@@ -31,7 +31,7 @@ export default function Navbar() {
             <li>
               <a 
                 href="/home" 
-                className="text-gray-900 hover:text-blue-700 dark:text-gray-300 dark:hover:text-blue-500 transition"
+                className="text-2xl text-gray-900 hover:text-blue-700 dark:text-gray-300 dark:hover:text-blue-500 transition"
               >
                 Properties
               </a>
