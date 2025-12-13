@@ -18,7 +18,7 @@ export default function LoginPage() {
     const checkAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
+        if (!session) {
           router.push('/dashboard');
         }
       } catch (error) {
